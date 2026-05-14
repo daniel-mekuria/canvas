@@ -1,0 +1,490 @@
+import { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ComponentDoc, ExampleSection } from '@/components/docs/ComponentDoc'
+
+const sourceCode = `import * as React from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const Dialog = DialogPrimitive.Root
+const DialogTrigger = DialogPrimitive.Trigger
+const DialogPortal = DialogPrimitive.Portal
+const DialogClose = DialogPrimitive.Close
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      'fixed inset-0 z-50 bg-black/70 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className
+    )}
+    {...props}
+  />
+))
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-3 border-foreground bg-background p-6 shadow-[8px_8px_0px_hsl(var(--shadow-color))] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:max-w-[425px]',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 border-2 border-foreground bg-background p-1 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4 stroke-[3]" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+))
+DialogContent.displayName = DialogPrimitive.Content.displayName
+
+// ... DialogHeader, DialogFooter, DialogTitle, DialogDescription
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+}`
+
+const usageCode = `import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+
+export default function Example() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>Open Dialog</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Dialog Title</DialogTitle>
+          <DialogDescription>
+            This is a dialog description.
+          </DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  )
+}`
+
+const vueSourceCode = `<script setup lang="ts">
+import { DialogRoot, type DialogRootProps } from 'reka-ui'
+
+const props = defineProps<DialogRootProps>()
+const emit = defineEmits<{
+  'update:open': [value: boolean]
+}>()
+</script>
+
+<template>
+  <DialogRoot v-bind="props" @update:open="emit('update:open', $event)">
+    <slot />
+  </DialogRoot>
+</template>
+
+<!-- DialogContent.vue -->
+<script setup lang="ts">
+import {
+  DialogPortal,
+  DialogOverlay,
+  DialogContent as DialogContentPrimitive,
+  DialogClose,
+} from 'reka-ui'
+import { X } from 'lucide-vue-next'
+import { cn } from '@/lib/utils'
+
+defineProps<{
+  class?: string
+}>()
+</script>
+
+<template>
+  <DialogPortal>
+    <DialogOverlay
+      class="fixed inset-0 z-50 bg-black/70 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+    />
+    <DialogContentPrimitive
+      :class="
+        cn(
+          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-3 border-foreground bg-background p-6 shadow-[8px_8px_0px_hsl(var(--shadow-color))] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:max-w-[425px]',
+          $props.class
+        )
+      "
+    >
+      <slot />
+      <DialogClose
+        class="absolute right-4 top-4 border-2 border-foreground bg-background p-1 shadow-[4px_4px_0px_hsl(var(--shadow-color))] transition-all duration-200 hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none active:translate-x-[4px] active:translate-y-[4px] active:shadow-none focus:outline-none focus:ring-2 focus:ring-ring disabled:pointer-events-none"
+      >
+        <X class="h-4 w-4 stroke-[3]" />
+        <span class="sr-only">Close</span>
+      </DialogClose>
+    </DialogContentPrimitive>
+  </DialogPortal>
+</template>`
+
+const vueUsageCode = `<script setup lang="ts">
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui'
+import { Button } from '@/components/ui'
+</script>
+
+<template>
+  <Dialog>
+    <DialogTrigger as-child>
+      <Button>Open Dialog</Button>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Dialog Title</DialogTitle>
+        <DialogDescription>
+          This is a dialog description.
+        </DialogDescription>
+      </DialogHeader>
+    </DialogContent>
+  </Dialog>
+</template>`
+
+export function DialogDoc() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <ComponentDoc
+        name="Dialog"
+        description="The BoldKit Dialog is a neubrutalism modal overlay built on Radix UI Dialog, with a managed focus trap that keeps keyboard navigation inside the open panel. It supports Escape key dismissal and click-outside closing out of the box. Use it for confirmations, form collection, or any content that needs to interrupt the current flow with full accessibility compliance."
+        dependencies={['@radix-ui/react-dialog']}
+        vueDependencies={['reka-ui']}
+        sourceCode={sourceCode}
+        vueSourceCode={vueSourceCode}
+        usageCode={usageCode}
+        vueUsageCode={vueUsageCode}
+      >
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Open Dialog</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Welcome to BoldKit</DialogTitle>
+              <DialogDescription>
+                This is a dialog with neubrutalism styling. Click outside or the X button to close.
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      </ComponentDoc>
+
+      {/* Basic */}
+      <ExampleSection
+        title="Basic"
+        description="A simple dialog with title and description."
+        code={`<Dialog>
+  <DialogTrigger asChild>
+    <Button>Open</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Are you sure?</DialogTitle>
+      <DialogDescription>
+        This action cannot be undone.
+      </DialogDescription>
+    </DialogHeader>
+  </DialogContent>
+</Dialog>`}
+        vueCode={`<template>
+  <Dialog>
+    <DialogTrigger as-child>
+      <Button>Open</Button>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Are you sure?</DialogTitle>
+        <DialogDescription>
+          This action cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+    </DialogContent>
+  </Dialog>
+</template>`}
+      >
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Open</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you sure?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      </ExampleSection>
+
+      {/* With Form */}
+      <ExampleSection
+        title="With Form"
+        description="Use dialogs to collect user input through forms."
+        code={`<Dialog>
+  <DialogTrigger asChild>
+    <Button>Edit Profile</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Edit Profile</DialogTitle>
+      <DialogDescription>
+        Make changes to your profile here.
+      </DialogDescription>
+    </DialogHeader>
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="name" className="text-right">Name</Label>
+        <Input id="name" defaultValue="John Doe" className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="username" className="text-right">Username</Label>
+        <Input id="username" defaultValue="@johndoe" className="col-span-3" />
+      </div>
+    </div>
+    <DialogFooter>
+      <Button type="submit">Save changes</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`}
+        vueCode={`<template>
+  <Dialog>
+    <DialogTrigger as-child>
+      <Button>Edit Profile</Button>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Edit Profile</DialogTitle>
+        <DialogDescription>
+          Make changes to your profile here.
+        </DialogDescription>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid grid-cols-4 items-center gap-4">
+          <Label for="name" class="text-right">Name</Label>
+          <Input id="name" default-value="John Doe" class="col-span-3" />
+        </div>
+        <div class="grid grid-cols-4 items-center gap-4">
+          <Label for="username" class="text-right">Username</Label>
+          <Input id="username" default-value="@johndoe" class="col-span-3" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="submit">Save changes</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+</template>`}
+      >
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Edit Profile</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+              <DialogDescription>
+                Make changes to your profile here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Name</Label>
+                <Input id="name" defaultValue="John Doe" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="username" className="text-right">Username</Label>
+                <Input id="username" defaultValue="@johndoe" className="col-span-3" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </ExampleSection>
+
+      {/* Controlled */}
+      <ExampleSection
+        title="Controlled"
+        description="Control the dialog open state programmatically."
+        code={`const [open, setOpen] = useState(false)
+
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogTrigger asChild>
+    <Button>Controlled Dialog</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Controlled Dialog</DialogTitle>
+      <DialogDescription>
+        This dialog's state is controlled externally.
+      </DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <Button onClick={() => setOpen(false)}>Close</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`}
+        vueCode={`<script setup lang="ts">
+import { ref } from 'vue'
+
+const open = ref(false)
+</script>
+
+<template>
+  <Dialog v-model:open="open">
+    <DialogTrigger as-child>
+      <Button>Controlled Dialog</Button>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Controlled Dialog</DialogTitle>
+        <DialogDescription>
+          This dialog's state is controlled externally.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button @click="open = false">Close</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+</template>`}
+      >
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>Controlled Dialog</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Controlled Dialog</DialogTitle>
+              <DialogDescription>
+                This dialog's state is controlled externally. You can close it programmatically.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button onClick={() => setOpen(false)}>Confirm</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </ExampleSection>
+
+      {/* Confirmation Dialog */}
+      <ExampleSection
+        title="Confirmation Dialog"
+        description="A common pattern for confirming destructive actions."
+        code={`<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="destructive">Delete Account</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Delete Account</DialogTitle>
+      <DialogDescription>
+        Are you sure you want to delete your account? This action is permanent.
+      </DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="outline">Cancel</Button>
+      </DialogClose>
+      <Button variant="destructive">Delete</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`}
+        vueCode={`<template>
+  <Dialog>
+    <DialogTrigger as-child>
+      <Button variant="destructive">Delete Account</Button>
+    </DialogTrigger>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogDescription>
+          Are you sure you want to delete your account? This action is permanent.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button variant="outline">Cancel</Button>
+        </DialogClose>
+        <Button variant="destructive">Delete</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+</template>`}
+      >
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="destructive">Delete Account</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Account</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete your account? All of your data will be permanently removed. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button variant="destructive">Delete Account</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </ExampleSection>
+    </>
+  )
+}

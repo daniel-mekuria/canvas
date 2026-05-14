@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage
+.angular/
+
+# Claude AI / tool config
+CLAUDE.md
+.mcp.json
+.superpowers/
+
+# Internal docs / design specs
+docs/superpowers/
+docs/superpowers/specs
+
+# GitHub Actions workflows (require workflow OAuth scope to push)
+.github/workflows/test-rn.yml
+
+# Git worktrees
+.worktrees/
+articles/

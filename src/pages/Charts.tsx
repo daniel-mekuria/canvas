@@ -1,0 +1,3051 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  CHART_PALETTES,
+  getChartColor,
+  Sparkline,
+  DonutChart,
+  DonutChartCenter,
+  RadialBarChart,
+  RadarChart,
+  GaugeChart,
+  FunnelChart,
+  TreemapChart,
+  HeatmapChart,
+  SankeyChart,
+} from '@/components/ui/chart'
+import type { ChartConfig, ChartPalette } from '@/components/ui/chart'
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+  Cell,
+} from 'recharts'
+import { TrendingUp, TrendingDown, Code, Copy, Check, AreaChart as AreaIcon, BarChart3, LineChart as LineIcon, PieChart as PieIcon, Circle, Target, Radar, Gauge, Sparkles, Palette, LayoutGrid } from 'lucide-react'
+import { Layout } from '@/components/layout'
+import { useFramework, FrameworkToggle, ReactIcon, VueIcon } from '@/hooks/use-framework'
+import { SEO, pageSEO } from '@/components/SEO'
+
+// Sample data for charts
+const areaData = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const barData = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const lineData = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const pieData = [
+  { browser: 'Chrome', visitors: 275, fill: 'hsl(var(--primary))' },
+  { browser: 'Safari', visitors: 200, fill: 'hsl(var(--secondary))' },
+  { browser: 'Firefox', visitors: 187, fill: 'hsl(var(--accent))' },
+  { browser: 'Edge', visitors: 173, fill: 'hsl(var(--success))' },
+  { browser: 'Other', visitors: 90, fill: 'hsl(var(--muted))' },
+]
+
+const horizontalBarData = [
+  { browser: 'Chrome', visitors: 275 },
+  { browser: 'Safari', visitors: 200 },
+  { browser: 'Firefox', visitors: 187 },
+  { browser: 'Edge', visitors: 173 },
+  { browser: 'Other', visitors: 90 },
+]
+
+const chartConfig: ChartConfig = {
+  desktop: {
+    label: 'Desktop',
+    color: 'hsl(var(--primary))',
+  },
+  mobile: {
+    label: 'Mobile',
+    color: 'hsl(var(--secondary))',
+  },
+  visitors: {
+    label: 'Visitors',
+    color: 'hsl(var(--primary))',
+  },
+}
+
+const pieChartConfig: ChartConfig = {
+  visitors: { label: 'Visitors' },
+  chrome: { label: 'Chrome', color: 'hsl(var(--primary))' },
+  safari: { label: 'Safari', color: 'hsl(var(--secondary))' },
+  firefox: { label: 'Firefox', color: 'hsl(var(--accent))' },
+  edge: { label: 'Edge', color: 'hsl(var(--success))' },
+  other: { label: 'Other', color: 'hsl(var(--muted))' },
+}
+
+// Vue code examples for copy functionality
+const vueChartCodes = {
+  areaBasic: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  grid: { top: 20, right: 20, bottom: 40, left: 50 },
+  xAxis: {
+    type: 'category',
+    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    axisLine: { show: false },
+    axisTick: { show: false }
+  },
+  yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false } },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'line',
+    data: [186, 305, 237, 73, 209, 214],
+    areaStyle: { color: 'hsl(var(--primary))', opacity: 0.6 },
+    lineStyle: { color: 'hsl(var(--foreground))', width: 3 },
+    smooth: true
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  areaStacked: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent])
+
+const option = ref({
+  grid: { top: 40, right: 20, bottom: 60, left: 50 },
+  legend: { bottom: 0 },
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [
+    {
+      name: 'Desktop',
+      type: 'line',
+      stack: 'total',
+      data: [186, 305, 237, 73, 209, 214],
+      areaStyle: { color: 'hsl(var(--primary))', opacity: 0.6 },
+      lineStyle: { color: 'hsl(var(--foreground))', width: 3 },
+      smooth: true
+    },
+    {
+      name: 'Mobile',
+      type: 'line',
+      stack: 'total',
+      data: [80, 200, 120, 190, 130, 140],
+      areaStyle: { color: 'hsl(var(--secondary))', opacity: 0.6 },
+      lineStyle: { color: 'hsl(var(--foreground))', width: 3 },
+      smooth: true
+    }
+  ]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  barBasic: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  grid: { top: 20, right: 20, bottom: 40, left: 50 },
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'bar',
+    data: [186, 305, 237, 73, 209, 214],
+    itemStyle: {
+      color: 'hsl(var(--primary))',
+      borderColor: 'hsl(var(--foreground))',
+      borderWidth: 3
+    }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  barMultiple: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
+
+const option = ref({
+  legend: { bottom: 0 },
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [
+    {
+      name: 'Desktop',
+      type: 'bar',
+      data: [186, 305, 237, 73, 209, 214],
+      itemStyle: { color: 'hsl(var(--primary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+    },
+    {
+      name: 'Mobile',
+      type: 'bar',
+      data: [80, 200, 120, 190, 130, 140],
+      itemStyle: { color: 'hsl(var(--secondary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+    }
+  ]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  lineBasic: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'line',
+    data: [186, 305, 237, 73, 209, 214],
+    lineStyle: { color: 'hsl(var(--primary))', width: 4 },
+    symbol: 'circle',
+    symbolSize: 10,
+    itemStyle: {
+      color: 'hsl(var(--primary))',
+      borderColor: 'hsl(var(--foreground))',
+      borderWidth: 3
+    },
+    smooth: true
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  pieBasic: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import { TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, PieChart, TooltipComponent])
+
+const option = ref({
+  tooltip: { trigger: 'item' },
+  series: [{
+    type: 'pie',
+    radius: '70%',
+    data: [
+      { value: 275, name: 'Chrome', itemStyle: { color: 'hsl(var(--primary))' } },
+      { value: 200, name: 'Safari', itemStyle: { color: 'hsl(var(--secondary))' } },
+      { value: 187, name: 'Firefox', itemStyle: { color: 'hsl(var(--accent))' } },
+      { value: 173, name: 'Edge', itemStyle: { color: 'hsl(var(--success))' } },
+      { value: 90, name: 'Other', itemStyle: { color: 'hsl(var(--muted))' } }
+    ],
+    itemStyle: { borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  pieDonut: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import { TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, PieChart, TooltipComponent])
+
+const option = ref({
+  tooltip: { trigger: 'item' },
+  series: [{
+    type: 'pie',
+    radius: ['40%', '70%'],
+    data: [
+      { value: 275, name: 'Chrome', itemStyle: { color: 'hsl(var(--primary))' } },
+      { value: 200, name: 'Safari', itemStyle: { color: 'hsl(var(--secondary))' } },
+      { value: 187, name: 'Firefox', itemStyle: { color: 'hsl(var(--accent))' } },
+      { value: 173, name: 'Edge', itemStyle: { color: 'hsl(var(--success))' } },
+      { value: 90, name: 'Other', itemStyle: { color: 'hsl(var(--muted))' } }
+    ],
+    itemStyle: { borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  areaStep: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'line',
+    data: [186, 305, 237, 73, 209, 214],
+    areaStyle: { color: 'hsl(var(--accent))', opacity: 0.6 },
+    lineStyle: { color: 'hsl(var(--foreground))', width: 3 },
+    step: 'middle'
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  areaLinear: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'line',
+    data: [186, 305, 237, 73, 209, 214],
+    areaStyle: { color: 'hsl(var(--success))', opacity: 0.6 },
+    lineStyle: { color: 'hsl(var(--foreground))', width: 3 },
+    smooth: false
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  barHorizontal: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  xAxis: { type: 'value' },
+  yAxis: { type: 'category', data: ['Chrome', 'Safari', 'Firefox', 'Edge', 'Other'] },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'bar',
+    data: [275, 200, 187, 173, 90],
+    itemStyle: { color: 'hsl(var(--primary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  barStacked: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
+
+const option = ref({
+  legend: { bottom: 0 },
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [
+    { name: 'Desktop', type: 'bar', stack: 'total', data: [186, 305, 237, 73, 209, 214], itemStyle: { color: 'hsl(var(--primary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 } },
+    { name: 'Mobile', type: 'bar', stack: 'total', data: [80, 200, 120, 190, 130, 140], itemStyle: { color: 'hsl(var(--secondary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 } }
+  ]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  lineMultiple: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent])
+
+const option = ref({
+  legend: { bottom: 0 },
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [
+    { name: 'Desktop', type: 'line', data: [186, 305, 237, 73, 209, 214], lineStyle: { color: 'hsl(var(--primary))', width: 4 }, itemStyle: { color: 'hsl(var(--primary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }, smooth: true },
+    { name: 'Mobile', type: 'line', data: [80, 200, 120, 190, 130, 140], lineStyle: { color: 'hsl(var(--secondary))', width: 4 }, itemStyle: { color: 'hsl(var(--secondary))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }, smooth: true }
+  ]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  lineStep: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'line',
+    data: [186, 305, 237, 73, 209, 214],
+    step: 'middle',
+    lineStyle: { color: 'hsl(var(--accent))', width: 4 },
+    itemStyle: { color: 'hsl(var(--accent))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  lineLinear: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+const option = ref({
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [{
+    type: 'line',
+    data: [186, 305, 237, 73, 209, 214],
+    smooth: false,
+    lineStyle: { color: 'hsl(var(--success))', width: 4 },
+    itemStyle: { color: 'hsl(var(--success))', borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  pieLegend: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import { TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
+
+const option = ref({
+  legend: { orient: 'vertical', left: 'left' },
+  tooltip: { trigger: 'item' },
+  series: [{
+    type: 'pie',
+    radius: '70%',
+    center: ['60%', '50%'],
+    data: [
+      { value: 275, name: 'Chrome', itemStyle: { color: 'hsl(var(--primary))' } },
+      { value: 200, name: 'Safari', itemStyle: { color: 'hsl(var(--secondary))' } },
+      { value: 187, name: 'Firefox', itemStyle: { color: 'hsl(var(--accent))' } },
+      { value: 173, name: 'Edge', itemStyle: { color: 'hsl(var(--success))' } },
+      { value: 90, name: 'Other', itemStyle: { color: 'hsl(var(--muted))' } }
+    ],
+    itemStyle: { borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`,
+
+  pieInteractive: `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import { TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+
+use([CanvasRenderer, PieChart, TooltipComponent, LegendComponent])
+
+const option = ref({
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0 },
+  series: [{
+    type: 'pie',
+    radius: ['40%', '70%'],
+    label: { show: true, formatter: '{b}: {c}' },
+    emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0 } },
+    data: [
+      { value: 275, name: 'Chrome', itemStyle: { color: 'hsl(var(--primary))' } },
+      { value: 200, name: 'Safari', itemStyle: { color: 'hsl(var(--secondary))' } },
+      { value: 187, name: 'Firefox', itemStyle: { color: 'hsl(var(--accent))' } },
+      { value: 173, name: 'Edge', itemStyle: { color: 'hsl(var(--success))' } },
+      { value: 90, name: 'Other', itemStyle: { color: 'hsl(var(--muted))' } }
+    ],
+    itemStyle: { borderColor: 'hsl(var(--foreground))', borderWidth: 3 }
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`
+}
+
+// Code examples for copy functionality
+const chartCodes = {
+  areaBasic: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+}
+
+export function AreaChartDemo() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <AreaChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Area
+          type="monotone"
+          dataKey="desktop"
+          fill="hsl(var(--primary))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+          fillOpacity={0.6}
+        />
+      </AreaChart>
+    </ChartContainer>
+  )
+}`,
+
+  areaStacked: `import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+  mobile: { label: 'Mobile', color: 'hsl(var(--secondary))' },
+}
+
+export function AreaChartStacked() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <AreaChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Area
+          type="monotone"
+          dataKey="mobile"
+          stackId="1"
+          fill="hsl(var(--secondary))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+          fillOpacity={0.6}
+        />
+        <Area
+          type="monotone"
+          dataKey="desktop"
+          stackId="1"
+          fill="hsl(var(--primary))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+          fillOpacity={0.6}
+        />
+      </AreaChart>
+    </ChartContainer>
+  )
+}`,
+
+  areaStep: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--accent))' },
+}
+
+export function AreaChartStep() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <AreaChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Area
+          type="step"
+          dataKey="desktop"
+          fill="hsl(var(--accent))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+          fillOpacity={0.6}
+        />
+      </AreaChart>
+    </ChartContainer>
+  )
+}`,
+
+  areaLinear: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--success))' },
+}
+
+export function AreaChartLinear() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <AreaChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Area
+          type="linear"
+          dataKey="desktop"
+          fill="hsl(var(--success))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+          fillOpacity={0.6}
+        />
+      </AreaChart>
+    </ChartContainer>
+  )
+}`,
+
+  barBasic: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+}
+
+export function BarChartDemo() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Bar
+          dataKey="desktop"
+          fill="hsl(var(--primary))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+        />
+      </BarChart>
+    </ChartContainer>
+  )
+}`,
+
+  barMultiple: `import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+  mobile: { label: 'Mobile', color: 'hsl(var(--secondary))' },
+}
+
+export function BarChartMultiple() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Bar dataKey="desktop" fill="hsl(var(--primary))" stroke="hsl(var(--foreground))" strokeWidth={3} />
+        <Bar dataKey="mobile" fill="hsl(var(--secondary))" stroke="hsl(var(--foreground))" strokeWidth={3} />
+      </BarChart>
+    </ChartContainer>
+  )
+}`,
+
+  barHorizontal: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { browser: 'Chrome', visitors: 275 },
+  { browser: 'Safari', visitors: 200 },
+  { browser: 'Firefox', visitors: 187 },
+  { browser: 'Edge', visitors: 173 },
+  { browser: 'Other', visitors: 90 },
+]
+
+const chartConfig = {
+  visitors: { label: 'Visitors', color: 'hsl(var(--accent))' },
+}
+
+export function BarChartHorizontal() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <BarChart data={data} layout="vertical">
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+        <XAxis type="number" tickLine={false} axisLine={false} />
+        <YAxis dataKey="browser" type="category" tickLine={false} axisLine={false} width={80} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Bar
+          dataKey="visitors"
+          fill="hsl(var(--accent))"
+          stroke="hsl(var(--foreground))"
+          strokeWidth={3}
+        />
+      </BarChart>
+    </ChartContainer>
+  )
+}`,
+
+  barStacked: `import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+  mobile: { label: 'Mobile', color: 'hsl(var(--secondary))' },
+}
+
+export function BarChartStacked() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Bar dataKey="desktop" stackId="a" fill="hsl(var(--primary))" stroke="hsl(var(--foreground))" strokeWidth={3} />
+        <Bar dataKey="mobile" stackId="a" fill="hsl(var(--secondary))" stroke="hsl(var(--foreground))" strokeWidth={3} />
+      </BarChart>
+    </ChartContainer>
+  )
+}`,
+
+  lineBasic: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+}
+
+export function LineChartDemo() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Line
+          type="monotone"
+          dataKey="desktop"
+          stroke="hsl(var(--primary))"
+          strokeWidth={4}
+          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+        />
+      </LineChart>
+    </ChartContainer>
+  )
+}`,
+
+  lineMultiple: `import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186, mobile: 80 },
+  { month: 'Feb', desktop: 305, mobile: 200 },
+  { month: 'Mar', desktop: 237, mobile: 120 },
+  { month: 'Apr', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'Jun', desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--primary))' },
+  mobile: { label: 'Mobile', color: 'hsl(var(--secondary))' },
+}
+
+export function LineChartMultiple() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Line
+          type="monotone"
+          dataKey="desktop"
+          stroke="hsl(var(--primary))"
+          strokeWidth={4}
+          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+        />
+        <Line
+          type="monotone"
+          dataKey="mobile"
+          stroke="hsl(var(--secondary))"
+          strokeWidth={4}
+          dot={{ fill: 'hsl(var(--secondary))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+        />
+      </LineChart>
+    </ChartContainer>
+  )
+}`,
+
+  lineStep: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--accent))' },
+}
+
+export function LineChartStep() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Line
+          type="stepAfter"
+          dataKey="desktop"
+          stroke="hsl(var(--accent))"
+          strokeWidth={4}
+          dot={{ fill: 'hsl(var(--accent))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+        />
+      </LineChart>
+    </ChartContainer>
+  )
+}`,
+
+  lineLinear: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+
+const data = [
+  { month: 'Jan', desktop: 186 },
+  { month: 'Feb', desktop: 305 },
+  { month: 'Mar', desktop: 237 },
+  { month: 'Apr', desktop: 73 },
+  { month: 'May', desktop: 209 },
+  { month: 'Jun', desktop: 214 },
+]
+
+const chartConfig = {
+  desktop: { label: 'Desktop', color: 'hsl(var(--success))' },
+}
+
+export function LineChartLinear() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} />
+        <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+        <Line
+          type="linear"
+          dataKey="desktop"
+          stroke="hsl(var(--success))"
+          strokeWidth={4}
+          dot={{ fill: 'hsl(var(--success))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+        />
+      </LineChart>
+    </ChartContainer>
+  )
+}`,
+
+  pieBasic: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Pie, PieChart, Cell } from 'recharts'
+
+const data = [
+  { browser: 'Chrome', visitors: 275, fill: 'hsl(var(--primary))' },
+  { browser: 'Safari', visitors: 200, fill: 'hsl(var(--secondary))' },
+  { browser: 'Firefox', visitors: 187, fill: 'hsl(var(--accent))' },
+  { browser: 'Edge', visitors: 173, fill: 'hsl(var(--success))' },
+  { browser: 'Other', visitors: 90, fill: 'hsl(var(--muted))' },
+]
+
+const chartConfig = {
+  visitors: { label: 'Visitors' },
+  chrome: { label: 'Chrome', color: 'hsl(var(--primary))' },
+  safari: { label: 'Safari', color: 'hsl(var(--secondary))' },
+  firefox: { label: 'Firefox', color: 'hsl(var(--accent))' },
+  edge: { label: 'Edge', color: 'hsl(var(--success))' },
+  other: { label: 'Other', color: 'hsl(var(--muted))' },
+}
+
+export function PieChartDemo() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <PieChart>
+        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+        <Pie
+          data={data}
+          dataKey="visitors"
+          nameKey="browser"
+          cx="50%"
+          cy="50%"
+          outerRadius={100}
+          strokeWidth={3}
+          stroke="hsl(var(--foreground))"
+        >
+          {data.map((entry, index) => (
+            <Cell key={\`cell-\${index}\`} fill={entry.fill} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  )
+}`,
+
+  pieDonut: `import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Pie, PieChart, Cell } from 'recharts'
+
+const data = [
+  { browser: 'Chrome', visitors: 275, fill: 'hsl(var(--primary))' },
+  { browser: 'Safari', visitors: 200, fill: 'hsl(var(--secondary))' },
+  { browser: 'Firefox', visitors: 187, fill: 'hsl(var(--accent))' },
+  { browser: 'Edge', visitors: 173, fill: 'hsl(var(--success))' },
+  { browser: 'Other', visitors: 90, fill: 'hsl(var(--muted))' },
+]
+
+const chartConfig = {
+  visitors: { label: 'Visitors' },
+  chrome: { label: 'Chrome', color: 'hsl(var(--primary))' },
+  safari: { label: 'Safari', color: 'hsl(var(--secondary))' },
+  firefox: { label: 'Firefox', color: 'hsl(var(--accent))' },
+  edge: { label: 'Edge', color: 'hsl(var(--success))' },
+  other: { label: 'Other', color: 'hsl(var(--muted))' },
+}
+
+export function PieChartDonut() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <PieChart>
+        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+        <Pie
+          data={data}
+          dataKey="visitors"
+          nameKey="browser"
+          cx="50%"
+          cy="50%"
+          innerRadius={60}
+          outerRadius={100}
+          strokeWidth={3}
+          stroke="hsl(var(--foreground))"
+        >
+          {data.map((entry, index) => (
+            <Cell key={\`cell-\${index}\`} fill={entry.fill} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  )
+}`,
+
+  pieLegend: `import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
+import { Pie, PieChart, Cell } from 'recharts'
+
+const data = [
+  { browser: 'Chrome', visitors: 275, fill: 'hsl(var(--primary))' },
+  { browser: 'Safari', visitors: 200, fill: 'hsl(var(--secondary))' },
+  { browser: 'Firefox', visitors: 187, fill: 'hsl(var(--accent))' },
+  { browser: 'Edge', visitors: 173, fill: 'hsl(var(--success))' },
+  { browser: 'Other', visitors: 90, fill: 'hsl(var(--muted))' },
+]
+
+const chartConfig = {
+  visitors: { label: 'Visitors' },
+  chrome: { label: 'Chrome', color: 'hsl(var(--primary))' },
+  safari: { label: 'Safari', color: 'hsl(var(--secondary))' },
+  firefox: { label: 'Firefox', color: 'hsl(var(--accent))' },
+  edge: { label: 'Edge', color: 'hsl(var(--success))' },
+  other: { label: 'Other', color: 'hsl(var(--muted))' },
+}
+
+export function PieChartWithLegend() {
+  return (
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <PieChart>
+        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+        <ChartLegend content={<ChartLegendContent nameKey="browser" />} verticalAlign="bottom" />
+        <Pie
+          data={data}
+          dataKey="visitors"
+          nameKey="browser"
+          cx="50%"
+          cy="45%"
+          outerRadius={80}
+          strokeWidth={3}
+          stroke="hsl(var(--foreground))"
+        >
+          {data.map((entry, index) => (
+            <Cell key={\`cell-\${index}\`} fill={entry.fill} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  )
+}`,
+
+  pieInteractive: `import { useState } from 'react'
+import { ChartContainer } from '@/components/ui/chart'
+import { Pie, PieChart, Cell } from 'recharts'
+
+const data = [
+  { browser: 'Chrome', visitors: 275, fill: 'hsl(var(--primary))' },
+  { browser: 'Safari', visitors: 200, fill: 'hsl(var(--secondary))' },
+  { browser: 'Firefox', visitors: 187, fill: 'hsl(var(--accent))' },
+  { browser: 'Edge', visitors: 173, fill: 'hsl(var(--success))' },
+  { browser: 'Other', visitors: 90, fill: 'hsl(var(--muted))' },
+]
+
+const chartConfig = {
+  visitors: { label: 'Visitors' },
+  chrome: { label: 'Chrome', color: 'hsl(var(--primary))' },
+  safari: { label: 'Safari', color: 'hsl(var(--secondary))' },
+  firefox: { label: 'Firefox', color: 'hsl(var(--accent))' },
+  edge: { label: 'Edge', color: 'hsl(var(--success))' },
+  other: { label: 'Other', color: 'hsl(var(--muted))' },
+}
+
+export function InteractivePieChart() {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  return (
+    <div>
+      <div className="text-center mb-4">
+        <p className="text-2xl font-black">{data[activeIndex].visitors}</p>
+        <p className="text-sm text-muted-foreground">{data[activeIndex].browser} visitors</p>
+      </div>
+      <ChartContainer config={chartConfig} className="h-[250px] w-full">
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="visitors"
+            nameKey="browser"
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={90}
+            strokeWidth={3}
+            stroke="hsl(var(--foreground))"
+            onMouseEnter={(_, index) => setActiveIndex(index)}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={index}
+                fill={entry.fill}
+                opacity={index === activeIndex ? 1 : 0.5}
+                style={{
+                  transform: index === activeIndex ? 'scale(1.05)' : 'scale(1)',
+                  transformOrigin: 'center',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer'
+                }}
+              />
+            ))}
+          </Pie>
+        </PieChart>
+      </ChartContainer>
+    </div>
+  )
+}`,
+}
+
+function ChartCard({
+  title,
+  description,
+  trend,
+  trendValue,
+  code,
+  vueCode,
+  children,
+}: {
+  title: string
+  description: string
+  trend?: 'up' | 'down'
+  trendValue?: string
+  code: string
+  vueCode?: string
+  children: React.ReactNode
+}) {
+  const [copied, setCopied] = useState(false)
+  const { framework } = useFramework()
+
+  const currentCode = framework === 'react' ? code : (vueCode || code)
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(currentCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <Card className="overflow-hidden min-w-0">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0">
+        <div>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
+              <Code className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[80vh] p-0">
+            <DialogHeader className="p-6 pb-4 pr-14">
+              <DialogTitle className="flex items-center gap-2">
+                {title}
+                <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1">
+                  {framework === 'react' ? <ReactIcon className="h-3 w-3" /> : <VueIcon className="h-3 w-3" />}
+                  {framework === 'react' ? 'React' : 'Vue'}
+                </Badge>
+              </DialogTitle>
+              <div className="pt-2">
+                <Button variant="outline" size="sm" onClick={copyCode} className="gap-2">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? 'Copied!' : 'Copy Code'}
+                </Button>
+              </div>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] px-6 pb-6">
+              <pre className="p-4 bg-muted border-3 border-foreground text-sm whitespace-pre-wrap break-words">
+                <code className="text-xs leading-relaxed block">{currentCode}</code>
+              </pre>
+              {framework === 'vue' && !vueCode && (
+                <p className="mt-4 text-sm text-muted-foreground flex items-center gap-2">
+                  <VueIcon className="h-4 w-4" /> Vue code sample coming soon. Uses vue-echarts for charting.
+                </p>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        {children}
+        {trend && trendValue && (
+          <div className="flex items-center gap-2 mt-4 text-sm">
+            {trend === 'up' ? (
+              <TrendingUp className="h-4 w-4 text-success" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-destructive" />
+            )}
+            <span className="font-bold">{trendValue}</span>
+            <span className="text-muted-foreground">from last month</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+export function Charts() {
+  const [activeSlice, setActiveSlice] = useState(0)
+  const { framework } = useFramework()
+
+  return (
+    <>
+      <SEO {...pageSEO.charts} />
+      <Layout>
+      {/* Header */}
+      <header className="relative border-b-3 border-foreground bg-info/20 overflow-hidden">
+        <div className="grid-pattern absolute inset-0 opacity-20" />
+        <div className="container relative mx-auto py-12 px-4 md:px-6 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Badge variant="accent">Charts</Badge>
+            <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1.5">
+              {framework === 'react' ? <ReactIcon className="h-4 w-4" /> : <VueIcon className="h-4 w-4" />}
+              {framework === 'react' ? 'React' : 'Vue 3'}
+            </Badge>
+          </div>
+          <h1 className="text-3xl font-black uppercase tracking-tight md:text-5xl">
+            Chart Components
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+            Beautiful charts with neubrutalism styling. Built on top of {framework === 'react' ? 'Recharts' : 'vue-echarts'} with bold borders and hard shadows.
+          </p>
+          <FrameworkToggle />
+          {framework === 'vue' && (
+            <div className="mt-4 p-3 border-3 border-warning bg-warning/10 max-w-xl mx-auto text-left">
+              <p className="text-sm font-medium">
+                <strong>Nuxt:</strong> Charts require <code className="bg-muted px-1 border mx-1">&lt;ClientOnly&gt;</code> wrapper for SSR compatibility.
+              </p>
+              <pre className="mt-2 text-xs bg-muted p-2 border overflow-x-auto">
+                <code>{`<ClientOnly>\n  <VChart :option="option" />\n</ClientOnly>`}</code>
+              </pre>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="container mx-auto py-6 md:py-8 px-4 md:px-6 overflow-x-hidden">
+        <Tabs defaultValue="area" className="w-full">
+          {/* Chart Type Selector */}
+          <div className="mb-8 md:mb-10">
+            <div className="grid grid-cols-5 md:grid-cols-10 gap-2 md:gap-3 max-w-4xl mx-auto">
+              <TabsList className="contents">
+                <TabsTrigger
+                  value="area"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <AreaIcon className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Area</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="bar"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <BarChart3 className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Bar</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="line"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <LineIcon className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Line</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="pie"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <PieIcon className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Pie</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="donut"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <Circle className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Donut</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="radial"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <Target className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Radial</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="radar"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <Radar className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Radar</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="gauge"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <Gauge className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Gauge</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="sparkline"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <Sparkles className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Spark</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="funnel"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <svg className="h-5 w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 4h18M6 8h12M9 12h6M12 16v5"/></svg>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Funnel</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="treemap"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <LayoutGrid className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Treemap</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="heatmap"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <svg className="h-5 w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="5" height="5"/><rect x="10" y="3" width="5" height="5"/><rect x="17" y="3" width="4" height="5"/><rect x="3" y="10" width="5" height="5"/><rect x="10" y="10" width="5" height="5"/><rect x="17" y="10" width="4" height="5"/><rect x="3" y="17" width="5" height="4"/><rect x="10" y="17" width="5" height="4"/><rect x="17" y="17" width="4" height="4"/></svg>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Heatmap</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="sankey"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <svg className="h-5 w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h4v12H3M17 6h4v12h-4M7 9c3 0 7 2 10 3M7 15c3 0 7-2 10-3"/></svg>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Sankey</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="styles"
+                  className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 md:px-4 data-[state=active]:shadow-[3px_3px_0px_hsl(var(--shadow-color))]"
+                >
+                  <Palette className="h-5 w-5 md:h-6 md:w-6" />
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide">Styles</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
+
+          {/* Area Charts */}
+          <TabsContent value="area" className="space-y-6 md:space-y-8">
+            <div className="grid gap-6 md:gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Area Chart"
+                description="Showing total visitors for the last 6 months"
+                trend="up"
+                trendValue="+5.2%"
+                code={chartCodes.areaBasic}
+                vueCode={vueChartCodes.areaBasic}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <AreaChart data={areaData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Area
+                      type="monotone"
+                      dataKey="desktop"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Area Chart - Stacked"
+                description="Showing desktop and mobile visitors"
+                trend="up"
+                trendValue="+12.5%"
+                code={chartCodes.areaStacked}
+                vueCode={vueChartCodes.areaStacked}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <AreaChart data={areaData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Area
+                      type="monotone"
+                      dataKey="mobile"
+                      stackId="1"
+                      fill="hsl(var(--secondary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                      fillOpacity={0.6}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="desktop"
+                      stackId="1"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Area Chart - Step"
+                description="Step interpolation for discrete data"
+                code={chartCodes.areaStep}
+                vueCode={vueChartCodes.areaStep}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <AreaChart data={areaData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Area
+                      type="step"
+                      dataKey="desktop"
+                      fill="hsl(var(--accent))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Area Chart - Linear"
+                description="Linear interpolation between points"
+                code={chartCodes.areaLinear}
+                vueCode={vueChartCodes.areaLinear}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <AreaChart data={areaData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Area
+                      type="linear"
+                      dataKey="desktop"
+                      fill="hsl(var(--success))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Bar Charts */}
+          <TabsContent value="bar" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Bar Chart"
+                description="Monthly visitor statistics"
+                trend="up"
+                trendValue="+8.1%"
+                code={chartCodes.barBasic}
+                vueCode={vueChartCodes.barBasic}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <BarChart data={barData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Bar
+                      dataKey="desktop"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Bar Chart - Multiple"
+                description="Comparing desktop and mobile"
+                code={chartCodes.barMultiple}
+                vueCode={vueChartCodes.barMultiple}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <BarChart data={barData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Bar
+                      dataKey="desktop"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                    />
+                    <Bar
+                      dataKey="mobile"
+                      fill="hsl(var(--secondary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Bar Chart - Horizontal"
+                description="Browser usage statistics"
+                code={chartCodes.barHorizontal}
+                vueCode={vueChartCodes.barHorizontal}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <BarChart data={horizontalBarData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tickLine={false} axisLine={false} />
+                    <YAxis dataKey="browser" type="category" tickLine={false} axisLine={false} width={80} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Bar
+                      dataKey="visitors"
+                      fill="hsl(var(--accent))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Bar Chart - Stacked"
+                description="Stacked comparison view"
+                code={chartCodes.barStacked}
+                vueCode={vueChartCodes.barStacked}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <BarChart data={barData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Bar
+                      dataKey="desktop"
+                      stackId="a"
+                      fill="hsl(var(--primary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                    />
+                    <Bar
+                      dataKey="mobile"
+                      stackId="a"
+                      fill="hsl(var(--secondary))"
+                      stroke="hsl(var(--foreground))"
+                      strokeWidth={3}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Line Charts */}
+          <TabsContent value="line" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Line Chart"
+                description="Visitor trends over time"
+                trend="up"
+                trendValue="+3.7%"
+                code={chartCodes.lineBasic}
+                vueCode={vueChartCodes.lineBasic}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <LineChart data={lineData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Line
+                      type="monotone"
+                      dataKey="desktop"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={4}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Line Chart - Multiple"
+                description="Multiple data series"
+                code={chartCodes.lineMultiple}
+                vueCode={vueChartCodes.lineMultiple}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <LineChart data={lineData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="desktop"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={4}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="mobile"
+                      stroke="hsl(var(--secondary))"
+                      strokeWidth={4}
+                      dot={{ fill: 'hsl(var(--secondary))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Line Chart - Step"
+                description="Step-wise progression"
+                code={chartCodes.lineStep}
+                vueCode={vueChartCodes.lineStep}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <LineChart data={lineData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Line
+                      type="stepAfter"
+                      dataKey="desktop"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={4}
+                      dot={{ fill: 'hsl(var(--accent))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Line Chart - Linear"
+                description="Linear interpolation"
+                code={chartCodes.lineLinear}
+                vueCode={vueChartCodes.lineLinear}
+              >
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <LineChart data={lineData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                    <Line
+                      type="linear"
+                      dataKey="desktop"
+                      stroke="hsl(var(--success))"
+                      strokeWidth={4}
+                      dot={{ fill: 'hsl(var(--success))', strokeWidth: 3, stroke: 'hsl(var(--foreground))' }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Pie Charts */}
+          <TabsContent value="pie" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Pie Chart"
+                description="Browser usage breakdown"
+                code={chartCodes.pieBasic}
+                vueCode={vueChartCodes.pieBasic}
+              >
+                <ChartContainer config={pieChartConfig} className="h-[300px] w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                    <Pie
+                      data={pieData}
+                      dataKey="visitors"
+                      nameKey="browser"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      strokeWidth={3}
+                      stroke="hsl(var(--foreground))"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Pie Chart - Donut"
+                description="Donut style visualization"
+                code={chartCodes.pieDonut}
+                vueCode={vueChartCodes.pieDonut}
+              >
+                <ChartContainer config={pieChartConfig} className="h-[300px] w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                    <Pie
+                      data={pieData}
+                      dataKey="visitors"
+                      nameKey="browser"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      strokeWidth={3}
+                      stroke="hsl(var(--foreground))"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Pie Chart - With Legend"
+                description="Including data legend"
+                code={chartCodes.pieLegend}
+                vueCode={vueChartCodes.pieLegend}
+              >
+                <ChartContainer config={pieChartConfig} className="h-[300px] w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                    <ChartLegend
+                      content={<ChartLegendContent nameKey="browser" />}
+                      verticalAlign="bottom"
+                    />
+                    <Pie
+                      data={pieData}
+                      dataKey="visitors"
+                      nameKey="browser"
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={80}
+                      strokeWidth={3}
+                      stroke="hsl(var(--foreground))"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </ChartCard>
+
+              <ChartCard
+                title="Pie Chart - Interactive"
+                description="Hover to highlight segments"
+                code={chartCodes.pieInteractive}
+                vueCode={vueChartCodes.pieInteractive}
+              >
+                <div className="text-center mb-4">
+                  <p className="text-2xl font-black">{pieData[activeSlice].visitors}</p>
+                  <p className="text-sm text-muted-foreground">{pieData[activeSlice].browser} visitors</p>
+                </div>
+                <ChartContainer config={pieChartConfig} className="h-[250px] w-full">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="visitors"
+                      nameKey="browser"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      strokeWidth={3}
+                      stroke="hsl(var(--foreground))"
+                      onMouseEnter={(_, index) => setActiveSlice(index)}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell
+                          key={`cell-interactive-${index}`}
+                          fill={entry.fill}
+                          opacity={index === activeSlice ? 1 : 0.5}
+                          style={{
+                            transform: index === activeSlice ? 'scale(1.05)' : 'scale(1)',
+                            transformOrigin: 'center',
+                            transition: 'all 0.2s ease-in-out',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Donut Charts */}
+          <TabsContent value="donut" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Donut Chart"
+                description="Browser market share distribution"
+                trend="up"
+                trendValue="+12.5%"
+                code={`<DonutChart
+  data={[
+    { name: 'Chrome', value: 275, fill: 'hsl(var(--primary))' },
+    { name: 'Safari', value: 200, fill: 'hsl(var(--secondary))' },
+    { name: 'Firefox', value: 187, fill: 'hsl(var(--accent))' },
+    { name: 'Edge', value: 173, fill: 'hsl(var(--success))' },
+  ]}
+  config={chartConfig}
+/>`}
+                vueCode={`<!-- Vue: Use vue-echarts with pie chart type -->`}
+              >
+                <DonutChart
+                  data={[
+                    { name: 'Chrome', value: 275, fill: 'hsl(var(--primary))' },
+                    { name: 'Safari', value: 200, fill: 'hsl(var(--secondary))' },
+                    { name: 'Firefox', value: 187, fill: 'hsl(var(--accent))' },
+                    { name: 'Edge', value: 173, fill: 'hsl(var(--success))' },
+                  ]}
+                  config={pieChartConfig}
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+
+              <ChartCard
+                title="Donut with Center Content"
+                description="Total visitors displayed in center"
+                trend="up"
+                trendValue="+8.3%"
+                code={`<DonutChart
+  data={donutData}
+  config={chartConfig}
+  centerContent={<DonutChartCenter value="835" label="Total" />}
+/>`}
+                vueCode={`<!-- Vue: Use vue-echarts with center label -->`}
+              >
+                <DonutChart
+                  data={[
+                    { name: 'Chrome', value: 275, fill: 'hsl(var(--primary))' },
+                    { name: 'Safari', value: 200, fill: 'hsl(var(--secondary))' },
+                    { name: 'Firefox', value: 187, fill: 'hsl(var(--accent))' },
+                    { name: 'Edge', value: 173, fill: 'hsl(var(--success))' },
+                  ]}
+                  config={pieChartConfig}
+                  centerContent={<DonutChartCenter value="835" label="Total" />}
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+
+              <ChartCard
+                title="Separated Donut"
+                description="Segments with visual separation"
+                trend="up"
+                trendValue="0%"
+                code={`<DonutChart data={data} config={config} variant="separated" />`}
+                vueCode={`<!-- Vue: Use vue-echarts with padAngle -->`}
+              >
+                <DonutChart
+                  data={[
+                    { name: 'Desktop', value: 450, fill: 'hsl(var(--primary))' },
+                    { name: 'Mobile', value: 320, fill: 'hsl(var(--secondary))' },
+                    { name: 'Tablet', value: 180, fill: 'hsl(var(--accent))' },
+                  ]}
+                  config={chartConfig}
+                  variant="separated"
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+
+              <ChartCard
+                title="Donut with Labels"
+                description="Outside labels showing percentages"
+                trend="down"
+                trendValue="-3.2%"
+                code={`<DonutChart data={data} config={config} showLabels="outside" />`}
+                vueCode={`<!-- Vue: Use vue-echarts with label config -->`}
+              >
+                <DonutChart
+                  data={[
+                    { name: 'Q1', value: 250, fill: 'hsl(var(--primary))' },
+                    { name: 'Q2', value: 300, fill: 'hsl(var(--secondary))' },
+                    { name: 'Q3', value: 280, fill: 'hsl(var(--accent))' },
+                    { name: 'Q4', value: 320, fill: 'hsl(var(--success))' },
+                  ]}
+                  config={chartConfig}
+                  showLabels="outside"
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Radial Bar Charts */}
+          <TabsContent value="radial" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Radial Bar Chart"
+                description="Progress rings for multiple metrics"
+                trend="up"
+                trendValue="+15.2%"
+                code={`<RadialBarChart
+  data={[
+    { name: 'Progress', value: 75 },
+    { name: 'Goals', value: 60 },
+    { name: 'Tasks', value: 45 },
+  ]}
+  config={chartConfig}
+/>`}
+                vueCode={`<!-- Vue: Use vue-echarts with gauge type -->`}
+              >
+                <RadialBarChart
+                  data={[
+                    { name: 'Progress', value: 75, fill: 'hsl(var(--primary))' },
+                    { name: 'Goals', value: 60, fill: 'hsl(var(--secondary))' },
+                    { name: 'Tasks', value: 45, fill: 'hsl(var(--accent))' },
+                  ]}
+                  config={{
+                    Progress: { label: 'Progress', color: 'hsl(var(--primary))' },
+                    Goals: { label: 'Goals', color: 'hsl(var(--secondary))' },
+                    Tasks: { label: 'Tasks', color: 'hsl(var(--accent))' },
+                  }}
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+
+              <ChartCard
+                title="Radial with Legend"
+                description="Shows legend at bottom"
+                trend="up"
+                trendValue="+7.8%"
+                code={`<RadialBarChart data={data} config={config} showLegend />`}
+                vueCode={`<!-- Vue: Use vue-echarts with legend -->`}
+              >
+                <RadialBarChart
+                  data={[
+                    { name: 'Sales', value: 85, fill: 'hsl(var(--success))' },
+                    { name: 'Revenue', value: 70, fill: 'hsl(var(--primary))' },
+                    { name: 'Expenses', value: 55, fill: 'hsl(var(--warning))' },
+                  ]}
+                  config={{
+                    Sales: { label: 'Sales', color: 'hsl(var(--success))' },
+                    Revenue: { label: 'Revenue', color: 'hsl(var(--primary))' },
+                    Expenses: { label: 'Expenses', color: 'hsl(var(--warning))' },
+                  }}
+                  showLegend
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Radar Charts */}
+          <TabsContent value="radar" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <ChartCard
+                title="Radar Chart"
+                description="Multi-variable comparison"
+                trend="up"
+                trendValue="+9.4%"
+                code={`<RadarChart
+  data={[
+    { subject: 'Math', A: 120, B: 110 },
+    { subject: 'Chinese', A: 98, B: 130 },
+    { subject: 'English', A: 86, B: 130 },
+    { subject: 'Geography', A: 99, B: 100 },
+    { subject: 'Physics', A: 85, B: 90 },
+  ]}
+  dataKeys={['A', 'B']}
+  config={chartConfig}
+/>`}
+                vueCode={`<!-- Vue: Use vue-echarts with radar type -->`}
+              >
+                <RadarChart
+                  data={[
+                    { subject: 'Math', A: 120, B: 110 },
+                    { subject: 'Chinese', A: 98, B: 130 },
+                    { subject: 'English', A: 86, B: 130 },
+                    { subject: 'Geography', A: 99, B: 100 },
+                    { subject: 'Physics', A: 85, B: 90 },
+                    { subject: 'Chemistry', A: 65, B: 85 },
+                  ]}
+                  dataKeys={['A', 'B']}
+                  config={{
+                    A: { label: 'Student A', color: 'hsl(var(--primary))' },
+                    B: { label: 'Student B', color: 'hsl(var(--secondary))' },
+                  }}
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+
+              <ChartCard
+                title="Filled Radar"
+                description="Solid fill with opacity"
+                trend="up"
+                trendValue="0%"
+                code={`<RadarChart data={data} dataKeys={keys} variant="filled" />`}
+                vueCode={`<!-- Vue: Use vue-echarts with areaStyle -->`}
+              >
+                <RadarChart
+                  data={[
+                    { subject: 'Speed', value: 80 },
+                    { subject: 'Strength', value: 90 },
+                    { subject: 'Defense', value: 70 },
+                    { subject: 'Magic', value: 85 },
+                    { subject: 'Stamina', value: 75 },
+                  ]}
+                  dataKeys={['value']}
+                  config={{
+                    value: { label: 'Stats', color: 'hsl(var(--primary))' },
+                  }}
+                  variant="filled"
+                  showLegend={false}
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+
+              <ChartCard
+                title="Outlined Radar"
+                description="Line only, no fill"
+                trend="down"
+                trendValue="-2.1%"
+                code={`<RadarChart data={data} dataKeys={keys} variant="outlined" />`}
+                vueCode={`<!-- Vue: Use vue-echarts without areaStyle -->`}
+              >
+                <RadarChart
+                  data={[
+                    { subject: 'Jan', sales: 65, target: 80 },
+                    { subject: 'Feb', sales: 75, target: 80 },
+                    { subject: 'Mar', sales: 90, target: 80 },
+                    { subject: 'Apr', sales: 70, target: 80 },
+                    { subject: 'May', sales: 85, target: 80 },
+                    { subject: 'Jun', sales: 95, target: 80 },
+                  ]}
+                  dataKeys={['sales', 'target']}
+                  config={{
+                    sales: { label: 'Sales', color: 'hsl(var(--primary))' },
+                    target: { label: 'Target', color: 'hsl(var(--destructive))' },
+                  }}
+                  variant="outlined"
+                  className="h-[300px] w-full"
+                />
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Gauge Charts */}
+          <TabsContent value="gauge" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <ChartCard
+                title="Gauge Chart"
+                description="Performance indicator"
+                trend="up"
+                trendValue="+5%"
+                code={`<GaugeChart value={72} label="Performance" />`}
+                vueCode={`<!-- Vue: Use vue-echarts with gauge type -->`}
+              >
+                <div className="flex justify-center py-4">
+                  <GaugeChart value={72} label="Performance" />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Low Value"
+                description="In the danger zone"
+                trend="down"
+                trendValue="-15%"
+                code={`<GaugeChart value={25} label="CPU" />`}
+                vueCode={`<!-- Vue: Use vue-echarts gauge -->`}
+              >
+                <div className="flex justify-center py-4">
+                  <GaugeChart value={25} label="CPU" />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="High Value"
+                description="Excellent performance"
+                trend="up"
+                trendValue="+20%"
+                code={`<GaugeChart value={92} label="Score" />`}
+                vueCode={`<!-- Vue: Use vue-echarts gauge -->`}
+              >
+                <div className="flex justify-center py-4">
+                  <GaugeChart value={92} label="Score" />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Custom Zones"
+                description="Temperature monitoring"
+                trend="up"
+                trendValue=""
+                code={`<GaugeChart
+  value={65}
+  zones={[
+    { from: 0, to: 50, color: 'hsl(var(--info))' },
+    { from: 50, to: 80, color: 'hsl(var(--warning))' },
+    { from: 80, to: 100, color: 'hsl(var(--destructive))' },
+  ]}
+  label="Temp"
+/>`}
+                vueCode={`<!-- Vue: Use vue-echarts with axisLine data -->`}
+              >
+                <div className="flex justify-center py-4">
+                  <GaugeChart
+                    value={65}
+                    zones={[
+                      { from: 0, to: 50, color: 'hsl(var(--info))' },
+                      { from: 50, to: 80, color: 'hsl(var(--warning))' },
+                      { from: 80, to: 100, color: 'hsl(var(--destructive))' },
+                    ]}
+                    label="Temp"
+                  />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Small Size"
+                description="Compact gauge"
+                trend="up"
+                trendValue="+3%"
+                code={`<GaugeChart value={60} size="sm" />`}
+                vueCode={`<!-- Vue: Adjust size in styles -->`}
+              >
+                <div className="flex justify-center py-4">
+                  <GaugeChart value={60} size="sm" />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Large Size"
+                description="Prominent display"
+                trend="up"
+                trendValue="+8%"
+                code={`<GaugeChart value={85} size="lg" label="Health" />`}
+                vueCode={`<!-- Vue: Adjust size in styles -->`}
+              >
+                <div className="flex justify-center py-4">
+                  <GaugeChart value={85} size="lg" label="Health" />
+                </div>
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Sparkline Charts */}
+          <TabsContent value="sparkline" className="space-y-8">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <ChartCard
+                title="Line Sparkline"
+                description="Inline trend indicator"
+                trend="up"
+                trendValue="+12%"
+                code={`<Sparkline data={[10, 25, 15, 30, 20, 35, 28]} type="line" />`}
+                vueCode={`<!-- Vue: Use vue-echarts mini line chart -->`}
+              >
+                <div className="flex items-center justify-center h-[100px]">
+                  <Sparkline
+                    data={[10, 25, 15, 30, 20, 35, 28]}
+                    type="line"
+                    height={48}
+                    width={200}
+                  />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Area Sparkline"
+                description="With gradient fill"
+                trend="up"
+                trendValue="+8%"
+                code={`<Sparkline data={data} type="area" trend="up" />`}
+                vueCode={`<!-- Vue: Use vue-echarts with areaStyle -->`}
+              >
+                <div className="flex items-center justify-center h-[100px]">
+                  <Sparkline
+                    data={[5, 15, 10, 25, 18, 30, 22, 35]}
+                    type="area"
+                    trend="up"
+                    height={48}
+                    width={200}
+                  />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Bar Sparkline"
+                description="Mini bar chart"
+                trend="up"
+                trendValue="0%"
+                code={`<Sparkline data={data} type="bar" />`}
+                vueCode={`<!-- Vue: Use vue-echarts bar type -->`}
+              >
+                <div className="flex items-center justify-center h-[100px]">
+                  <Sparkline
+                    data={[20, 35, 25, 40, 30, 45, 35]}
+                    type="bar"
+                    height={48}
+                    width={200}
+                  />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Upward Trend"
+                description="Success coloring"
+                trend="up"
+                trendValue="+25%"
+                code={`<Sparkline data={data} trend="up" showEndDot />`}
+                vueCode={`<!-- Vue: Style with success color -->`}
+              >
+                <div className="flex items-center justify-center h-[100px]">
+                  <Sparkline
+                    data={[10, 12, 15, 14, 18, 22, 25, 30]}
+                    trend="up"
+                    showEndDot
+                    height={48}
+                    width={200}
+                  />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="Downward Trend"
+                description="Destructive coloring"
+                trend="down"
+                trendValue="-18%"
+                code={`<Sparkline data={data} trend="down" showEndDot />`}
+                vueCode={`<!-- Vue: Style with destructive color -->`}
+              >
+                <div className="flex items-center justify-center h-[100px]">
+                  <Sparkline
+                    data={[30, 28, 25, 22, 20, 18, 15, 12]}
+                    trend="down"
+                    showEndDot
+                    height={48}
+                    width={200}
+                  />
+                </div>
+              </ChartCard>
+
+              <ChartCard
+                title="With End Dot"
+                description="Highlights current value"
+                trend="up"
+                trendValue=""
+                code={`<Sparkline data={data} type="area" showEndDot />`}
+                vueCode={`<!-- Vue: Add markPoint for end -->`}
+              >
+                <div className="flex items-center justify-center h-[100px]">
+                  <Sparkline
+                    data={[15, 20, 18, 25, 22, 28, 24]}
+                    type="area"
+                    showEndDot
+                    height={48}
+                    width={200}
+                  />
+                </div>
+              </ChartCard>
+            </div>
+          </TabsContent>
+
+          {/* Styles Tab */}
+          <TabsContent value="styles" className="space-y-12">
+            {/* Chart Container Variants */}
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Container Variants</h2>
+                <p className="text-muted-foreground">Different container styles for your charts using the variant prop.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {(['default', 'elevated', 'flat', 'filled', 'accent', 'primary', 'minimal'] as const).map((variant) => (
+                  <Card key={variant} className="overflow-hidden min-w-0">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="capitalize">{variant}</CardTitle>
+                      <CardDescription>variant="{variant}"</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={chartConfig} variant={variant} className="h-[180px] w-full">
+                        <BarChart data={barData.slice(0, 4)}>
+                          <Bar dataKey="desktop" fill="hsl(var(--primary))" stroke="hsl(var(--foreground))" strokeWidth={3} />
+                        </BarChart>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Color Palettes */}
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Color Palettes</h2>
+                <p className="text-muted-foreground">Pre-built color palettes for consistent neubrutalism styling.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                {(Object.keys(CHART_PALETTES) as ChartPalette[]).map((paletteName) => {
+                  const palette = CHART_PALETTES[paletteName]
+                  const paletteConfig: ChartConfig = palette.reduce((acc, color, index) => ({
+                    ...acc,
+                    [`value${index}`]: { label: `Series ${index + 1}`, color },
+                  }), {})
+                  const paletteData = palette.map((_, index) => ({
+                    name: `S${index + 1}`,
+                    value: 100 - index * 10,
+                    fill: palette[index],
+                  }))
+
+                  return (
+                    <Card key={paletteName} className="overflow-hidden min-w-0">
+                      <CardHeader>
+                        <CardTitle className="capitalize">{paletteName} Palette</CardTitle>
+                        <CardDescription>CHART_PALETTES.{paletteName}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex gap-2 mb-4">
+                          {palette.map((color, index) => (
+                            <div
+                              key={index}
+                              className="h-8 flex-1 border-3 border-foreground"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        <ChartContainer config={paletteConfig} className="h-[200px] w-full">
+                          <BarChart data={paletteData}>
+                            <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                            <Bar dataKey="value" stroke="hsl(var(--foreground))" strokeWidth={3}>
+                              {paletteData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ChartContainer>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Quick Win Examples */}
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Quick Styling Examples</h2>
+                <p className="text-muted-foreground">Copy these patterns for instant neubrutalism chart styling.</p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card className="overflow-hidden min-w-0">
+                  <CardHeader>
+                    <CardTitle>Vibrant Stacked Area</CardTitle>
+                    <CardDescription>Using the vibrant palette with elevated variant</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={chartConfig} variant="elevated" className="h-[250px] w-full">
+                      <AreaChart data={areaData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Area
+                          type="monotone"
+                          dataKey="mobile"
+                          stackId="1"
+                          fill={getChartColor('vibrant', 1)}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={3}
+                          fillOpacity={0.7}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="desktop"
+                          stackId="1"
+                          fill={getChartColor('vibrant', 0)}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={3}
+                          fillOpacity={0.7}
+                        />
+                      </AreaChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden min-w-0">
+                  <CardHeader>
+                    <CardTitle>Accent Highlighted Bars</CardTitle>
+                    <CardDescription>Using accent variant with pastel colors</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={chartConfig} variant="accent" className="h-[250px] w-full">
+                      <BarChart data={barData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="desktop" fill={getChartColor('pastel', 0)} stroke="hsl(var(--foreground))" strokeWidth={3} />
+                        <Bar dataKey="mobile" fill={getChartColor('pastel', 1)} stroke="hsl(var(--foreground))" strokeWidth={3} />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden min-w-0">
+                  <CardHeader>
+                    <CardTitle>Primary Line Chart</CardTitle>
+                    <CardDescription>Primary variant with thick line strokes</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={chartConfig} variant="primary" className="h-[250px] w-full">
+                      <LineChart data={lineData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                        <YAxis tickLine={false} axisLine={false} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line
+                          type="monotone"
+                          dataKey="desktop"
+                          stroke={getChartColor('vibrant', 0)}
+                          strokeWidth={5}
+                          dot={{ fill: getChartColor('vibrant', 0), strokeWidth: 3, stroke: 'hsl(var(--foreground))', r: 6 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="overflow-hidden min-w-0">
+                  <CardHeader>
+                    <CardTitle>Vibrant Donut</CardTitle>
+                    <CardDescription>Using filled variant with vibrant colors</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={pieChartConfig} variant="filled" className="h-[250px] w-full">
+                      <PieChart>
+                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                        <Pie
+                          data={pieData.map((item, index) => ({ ...item, fill: getChartColor('vibrant', index) }))}
+                          dataKey="visitors"
+                          nameKey="browser"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={85}
+                          strokeWidth={3}
+                          stroke="hsl(var(--foreground))"
+                        >
+                          {pieData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={getChartColor('vibrant', index)} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Code Example */}
+            <Card className="bg-muted/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Usage Example
+                  <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1">
+                    {framework === 'react' ? <ReactIcon className="h-3 w-3" /> : <VueIcon className="h-3 w-3" />}
+                    {framework === 'react' ? 'React' : 'Vue'}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>How to use the chart utilities</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <pre className="p-4 bg-background border-3 border-foreground text-sm overflow-x-auto shadow-[4px_4px_0px_hsl(var(--shadow-color))]">
+                  <code>{framework === 'react' ? `import { ChartContainer, CHART_PALETTES, getChartColor, createChartConfig } from '@/components/ui/chart'
+
+// Use pre-built palettes
+const colors = CHART_PALETTES.vibrant // ['hsl(0 84% 60%)', 'hsl(174 62% 50%)', ...]
+
+// Get individual colors by index
+const primaryColor = getChartColor('vibrant', 0)
+const secondaryColor = getChartColor('vibrant', 1)
+
+// Generate chart config from palette
+const config = createChartConfig(['sales', 'profit'], ['Sales', 'Profit'], 'bold')
+
+// Use container variants
+<ChartContainer config={config} variant="elevated">
+  <BarChart data={data}>
+    <Bar dataKey="sales" fill={getChartColor('vibrant', 0)} />
+    <Bar dataKey="profit" fill={getChartColor('vibrant', 1)} />
+  </BarChart>
+</ChartContainer>` : `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { ref } from 'vue'
+import { CHART_PALETTES, getChartColor } from '@/lib/chart-utils'
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
+
+// Use pre-built palettes
+const colors = CHART_PALETTES.vibrant
+
+// Get individual colors by index
+const primaryColor = getChartColor('vibrant', 0)
+const secondaryColor = getChartColor('vibrant', 1)
+
+const option = ref({
+  legend: { bottom: 0 },
+  xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+  yAxis: { type: 'value' },
+  tooltip: { trigger: 'axis' },
+  series: [
+    {
+      name: 'Sales',
+      type: 'bar',
+      data: [186, 305, 237, 73, 209, 214],
+      itemStyle: {
+        color: primaryColor,
+        borderColor: 'hsl(var(--foreground))',
+        borderWidth: 3
+      }
+    },
+    {
+      name: 'Profit',
+      type: 'bar',
+      data: [80, 200, 120, 190, 130, 140],
+      itemStyle: {
+        color: secondaryColor,
+        borderColor: 'hsl(var(--foreground))',
+        borderWidth: 3
+      }
+    }
+  ]
+})
+</script>
+
+<template>
+  <VChart :option="option" class="h-[300px] w-full" autoresize />
+</template>`}</code>
+                </pre>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* ── FUNNEL ──────────────────────────────────────── */}
+          <TabsContent value="funnel" className="space-y-8">
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-primary">
+                <CardTitle>Funnel Chart</CardTitle>
+                <CardDescription>Visualize conversion stages and drop-off rates</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <FunnelChart
+                  data={[
+                    { name: 'Visitors',   value: 12400 },
+                    { name: 'Sign-ups',   value: 4800 },
+                    { name: 'Trials',     value: 2100 },
+                    { name: 'Customers',  value: 840 },
+                    { name: 'Advocates',  value: 210 },
+                  ]}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-muted">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Code className="h-4 w-4" /> Code
+                  <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1 ml-auto">
+                    {framework === 'react' ? <ReactIcon className="h-3 w-3" /> : <VueIcon className="h-3 w-3" />}
+                    {framework === 'react' ? 'React' : 'Vue'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="p-4 bg-muted text-sm overflow-x-auto">
+                  <code>{framework === 'react' ? `import { FunnelChart } from '@/components/ui/chart'
+
+const data = [
+  { name: 'Visitors',  value: 12400 },
+  { name: 'Sign-ups',  value: 4800 },
+  { name: 'Trials',    value: 2100 },
+  { name: 'Customers', value: 840 },
+]
+
+<FunnelChart data={data} />` : `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { FunnelChart } from 'echarts/charts'
+import VChart from 'vue-echarts'
+use([FunnelChart, /* renderers */])
+
+const option = ref({
+  series: [{
+    type: 'funnel',
+    data: [
+      { name: 'Visitors', value: 100 },
+      { name: 'Sign-ups', value: 38 },
+      { name: 'Trials',   value: 17 },
+      { name: 'Customers',value: 7 },
+    ]
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" autoresize style="height: 300px" />
+</template>`}</code>
+                </pre>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── TREEMAP ──────────────────────────────────────── */}
+          <TabsContent value="treemap" className="space-y-8">
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-secondary">
+                <CardTitle>Treemap Chart</CardTitle>
+                <CardDescription>Hierarchical data as nested rectangles sized by value</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <TreemapChart
+                  data={[
+                    { name: 'Design',      value: 4200, children: [
+                      { name: 'UI/UX',    value: 2400 },
+                      { name: 'Branding', value: 1800 },
+                    ]},
+                    { name: 'Engineering', value: 8100, children: [
+                      { name: 'Frontend',  value: 3200 },
+                      { name: 'Backend',   value: 3100 },
+                      { name: 'DevOps',    value: 1800 },
+                    ]},
+                    { name: 'Marketing',   value: 3600, children: [
+                      { name: 'SEO',       value: 1400 },
+                      { name: 'Content',   value: 1200 },
+                      { name: 'Ads',       value: 1000 },
+                    ]},
+                    { name: 'Sales',       value: 2900 },
+                    { name: 'Support',     value: 1500 },
+                  ]}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-muted">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Code className="h-4 w-4" /> Code
+                  <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1 ml-auto">
+                    {framework === 'react' ? <ReactIcon className="h-3 w-3" /> : <VueIcon className="h-3 w-3" />}
+                    {framework === 'react' ? 'React' : 'Vue'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="p-4 bg-muted text-sm overflow-x-auto">
+                  <code>{framework === 'react' ? `import { TreemapChart } from '@/components/ui/chart'
+
+const data = [
+  { name: 'Engineering', value: 8100 },
+  { name: 'Marketing',   value: 3600 },
+  { name: 'Design',      value: 4200 },
+  { name: 'Sales',       value: 2900 },
+]
+
+<TreemapChart data={data} height={320} />` : `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { TreemapChart } from 'echarts/charts'
+import VChart from 'vue-echarts'
+use([TreemapChart, /* renderers */])
+
+const option = ref({
+  series: [{
+    type: 'treemap',
+    data: [
+      { name: 'Engineering', value: 8100 },
+      { name: 'Marketing',   value: 3600 },
+      { name: 'Design',      value: 4200 },
+    ]
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" autoresize style="height: 320px" />
+</template>`}</code>
+                </pre>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── HEATMAP ──────────────────────────────────────── */}
+          <TabsContent value="heatmap" className="space-y-8">
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-accent">
+                <CardTitle>Heatmap Chart</CardTitle>
+                <CardDescription>Intensity matrix — great for activity grids and correlation tables</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 overflow-x-auto">
+                <HeatmapChart
+                  rows={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
+                  cols={['12am','3am','6am','9am','12pm','3pm','6pm','9pm']}
+                  data={[
+                    ...['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].flatMap((row, ri) =>
+                      ['12am','3am','6am','9am','12pm','3pm','6pm','9pm'].map((col, ci) => ({
+                        row, col,
+                        value: Math.floor(Math.abs(Math.sin(ri * 7 + ci * 3)) * 100),
+                      }))
+                    )
+                  ]}
+                  cellSize={44}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-muted">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Code className="h-4 w-4" /> Code
+                  <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1 ml-auto">
+                    {framework === 'react' ? <ReactIcon className="h-3 w-3" /> : <VueIcon className="h-3 w-3" />}
+                    {framework === 'react' ? 'React' : 'Vue'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="p-4 bg-muted text-sm overflow-x-auto">
+                  <code>{framework === 'react' ? `import { HeatmapChart } from '@/components/ui/chart'
+
+<HeatmapChart
+  rows={['Mon', 'Tue', 'Wed', 'Thu', 'Fri']}
+  cols={['9am', '12pm', '3pm', '6pm', '9pm']}
+  data={[
+    { row: 'Mon', col: '9am',  value: 42 },
+    { row: 'Mon', col: '12pm', value: 87 },
+    // ...
+  ]}
+  cellSize={44}
+/>` : `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { HeatmapChart } from 'echarts/charts'
+import { GridComponent, VisualMapComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+
+const option = ref({
+  visualMap: { min: 0, max: 100, calculable: true },
+  series: [{
+    type: 'heatmap',
+    data: [[0, 0, 42], [0, 1, 87], /* ... */],
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" autoresize style="height: 300px" />
+</template>`}</code>
+                </pre>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── SANKEY ──────────────────────────────────────── */}
+          <TabsContent value="sankey" className="space-y-8">
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-success">
+                <CardTitle>Sankey Diagram</CardTitle>
+                <CardDescription>Flow and allocation between stages — budget, traffic, energy</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <SankeyChart
+                  height={300}
+                  nodes={[
+                    { id: 'organic',  label: 'Organic' },
+                    { id: 'paid',     label: 'Paid' },
+                    { id: 'social',   label: 'Social' },
+                    { id: 'direct',   label: 'Direct' },
+                    { id: 'landing',  label: 'Landing' },
+                    { id: 'pricing',  label: 'Pricing' },
+                    { id: 'blog',     label: 'Blog' },
+                    { id: 'trial',    label: 'Trial' },
+                    { id: 'purchase', label: 'Purchase' },
+                  ]}
+                  links={[
+                    { source: 'organic', target: 'landing',  value: 3200 },
+                    { source: 'organic', target: 'blog',     value: 1800 },
+                    { source: 'paid',    target: 'landing',  value: 2100 },
+                    { source: 'paid',    target: 'pricing',  value: 900 },
+                    { source: 'social',  target: 'blog',     value: 1400 },
+                    { source: 'direct',  target: 'pricing',  value: 1100 },
+                    { source: 'landing', target: 'trial',    value: 2800 },
+                    { source: 'pricing', target: 'trial',    value: 1200 },
+                    { source: 'blog',    target: 'trial',    value: 600 },
+                    { source: 'trial',   target: 'purchase', value: 1540 },
+                  ]}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="border-b-3 border-foreground bg-muted">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Code className="h-4 w-4" /> Code
+                  <Badge variant={framework === 'react' ? 'info' : 'success'} className="gap-1 ml-auto">
+                    {framework === 'react' ? <ReactIcon className="h-3 w-3" /> : <VueIcon className="h-3 w-3" />}
+                    {framework === 'react' ? 'React' : 'Vue'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="p-4 bg-muted text-sm overflow-x-auto">
+                  <code>{framework === 'react' ? `import { SankeyChart } from '@/components/ui/chart'
+
+<SankeyChart
+  nodes={[
+    { id: 'organic',  label: 'Organic' },
+    { id: 'landing',  label: 'Landing' },
+    { id: 'trial',    label: 'Trial' },
+    { id: 'purchase', label: 'Purchase' },
+  ]}
+  links={[
+    { source: 'organic',  target: 'landing',  value: 3200 },
+    { source: 'landing',  target: 'trial',    value: 2800 },
+    { source: 'trial',    target: 'purchase', value: 1540 },
+  ]}
+/>` : `<script setup lang="ts">
+import { use } from 'echarts/core'
+import { SankeyChart } from 'echarts/charts'
+import VChart from 'vue-echarts'
+
+const option = ref({
+  series: [{
+    type: 'sankey',
+    nodes: [
+      { name: 'Organic' },
+      { name: 'Landing' },
+      { name: 'Purchase' },
+    ],
+    links: [
+      { source: 'Organic', target: 'Landing',  value: 3200 },
+      { source: 'Landing', target: 'Purchase', value: 1540 },
+    ]
+  }]
+})
+</script>
+
+<template>
+  <VChart :option="option" autoresize style="height: 300px" />
+</template>`}</code>
+                </pre>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        </Tabs>
+      </main>
+
+      {/* Explore More */}
+      <section className="border-t-3 border-foreground py-8 md:py-10 bg-primary/10">
+        <div className="container mx-auto px-4">
+          <h2 className="text-sm font-black uppercase tracking-widest mb-4 text-center">Explore More</h2>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 flex-wrap">
+            <Link to="/templates/dashboard">
+              <Button variant="outline" className="w-full sm:w-auto">See charts used in templates</Button>
+            </Link>
+            <Link to="/components">
+              <Button variant="outline" className="w-full sm:w-auto">Browse all components</Button>
+            </Link>
+            <Link to="/blocks">
+              <Button variant="outline" className="w-full sm:w-auto">View section blocks with data</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+    </Layout>
+    </>
+  )
+}
